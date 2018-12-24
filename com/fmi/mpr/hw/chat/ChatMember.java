@@ -1,5 +1,3 @@
-package com.fmi.mpr.hw.chat;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -22,9 +20,11 @@ public class ChatMember {
 
         multicastSocket.joinGroup(groupAddress);
 
+        Thread threadForReceiving = new Thread(new ThreadForReceiving(groupAddress, port, multicastSocket));
+        threadForReceiving.start();
+
         System.out.println("Welcome to the group chat! You can now send texts, images or videos.");
 
-        // input messages and send them to everyone in the group:
         while(true){
             String textMessage = in.nextLine();
 
