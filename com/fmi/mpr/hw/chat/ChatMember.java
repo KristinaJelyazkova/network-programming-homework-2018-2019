@@ -1,7 +1,10 @@
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class ChatMember {
@@ -26,25 +29,66 @@ public class ChatMember {
         System.out.println("Welcome to the group chat! You can now send texts, images or videos.");
 
         while(true){
-            String textMessage = in.nextLine();
+            System.out.println("Enter \"TEXT\" if you will send a text message to the group"
+                        + "or \"FILE\" if you will send image or a video to the group.");
+            System.out.println("If you enter something else, it is assumed you will send a text message.");
+            String type = in.nextLine();
 
-            if(!textMessage.equals("end")){
-                textMessage = memberName + ": " + textMessage;
-                byte[] messageInBytes = textMessage.getBytes();
+            if(type.equals("FILE")){
+                System.out.print("Enter file name: ");
+                String fileName = in.nextLine();
 
-                DatagramPacket datagramPacket = new DatagramPacket(messageInBytes,
-                        messageInBytes.length, groupAddress, port);
-                multicastSocket.send(datagramPacket);
+                sendFile(fileName, groupAddress, port, multicastSocket);
             }
-            else{
-                isRunning = false;
-                System.out.println("Bye!");
+            else {
+                String textMessage = in.nextLine();
 
-                multicastSocket.leaveGroup(groupAddress);
-                multicastSocket.close();
+                if (!textMessage.equals("end")) {
+                    textMessage = memberName + ": " + textMessage;
+                    byte[] messageInBytes = textMessage.getBytes();
 
-                break;
+                    DatagramPacket datagramPacket = new DatagramPacket(messageInBytes,
+                            messageInBytes.length, groupAddress, port);
+                    multicastSocket.send(datagramPacket);
+                } else {
+                    isRunning = false;
+                    System.out.println("Bye!");
+
+                    multicastSocket.leaveGroup(groupAddress);
+                    multicastSocket.close();
+
+                    break;
+                }
             }
         }
+    }
+
+    private static void sendFile(String fileName, InetAddress groupAddress, int port, MulticastSocket multicastSocket)
+            throws IOException {
+        String message = "#FILE# " + fileName + " " + ChatMember.memberName;
+        byte[] messageInBytes = message.getBytes();
+
+        DatagramPacket datagramPacket = new DatagramPacket(messageInBytes,
+                messageInBytes.length, groupAddress, port);
+        multicastSocket.send(datagramPacket);
+
+        File file = new File(fileName);
+        FileInputStream in = new FileInputStream(file);
+        byte[] buffer = new byte[4096];
+        int bytesRead = 0;
+
+        while((bytesRead = in.read(buffer, 0, 4096)) > 0){
+            DatagramPacket packet = new DatagramPacket(Arrays.copyOfRange(buffer, 0, bytesRead),
+                    bytesRead, groupAddress, port);
+
+            multicastSocket.send(packet);
+        }
+
+        message = "#SENT#";
+        messageInBytes = message.getBytes();
+
+        DatagramPacket datagramPacket1 = new DatagramPacket(messageInBytes,
+                messageInBytes.length, groupAddress, port);
+        multicastSocket.send(datagramPacket1);
     }
 }
