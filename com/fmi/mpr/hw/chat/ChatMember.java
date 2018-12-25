@@ -72,6 +72,12 @@ public class ChatMember {
                 messageInBytes.length, groupAddress, port);
         multicastSocket.send(datagramPacket);
 
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         File file = new File(fileName);
         FileInputStream in = new FileInputStream(file);
         byte[] buffer = new byte[4096];
@@ -89,7 +95,7 @@ public class ChatMember {
             }
         }
 
-        System.out.println("DONE!");
+        //System.out.println("DONE!");
         in.close();
 
         message = "#SENT#";

@@ -53,36 +53,45 @@ public class ThreadForReceiving implements Runnable{
     }
 
     private void receiveFile(String fileName, MulticastSocket multicastSocket, boolean createFile) throws IOException {
-        //String[] arr = fileName.split("\\.");
-        fileName = fileName.split("\\.")[0];
-        //String name = arr[0], format = arr[1];
 
-        //System.out.println("file name = " + name + ", format = " + format);
-
-        File file = new File(fileName + "_copy_" + ChatMember.memberName + ".jpg");
-        //File file = new File(name + "_copy_" + ChatMember.memberName + "." + format);
-        FileOutputStream out = new FileOutputStream(file);
         byte[] buffer = new byte[4096];
         boolean fileSent = false;
 
-        while(!fileSent){
-            DatagramPacket packet = new DatagramPacket(buffer, 4096);
-            multicastSocket.receive(packet);
-            int bytesReceived = packet.getLength();
-            byte[] data = packet.getData();
+        if(!createFile) {
+            while (!fileSent) {
+                DatagramPacket packet = new DatagramPacket(buffer, 4096);
+                multicastSocket.receive(packet);
+                int bytesReceived = packet.getLength();
+                byte[] data = packet.getData();
 
-            if(new String(data, 0, bytesReceived).trim().equals("#SENT#")){
-                fileSent = true;
-            }
-            else if(createFile){
-                out.write(packet.getData(), 0, bytesReceived);
+                if (new String(data, 0, bytesReceived).trim().equals("#SENT#")) {
+                    fileSent = true;
+                }
             }
         }
 
-        System.out.println("Done.");
-        out.flush();
+        else {
+            String[] arr = fileName.split("\\.");
+            String name = arr[0], format = arr[1];
 
-        if(out != null){
+            File file = new File(name + "_copy_" + ChatMember.memberName + "." + format);
+            FileOutputStream out = new FileOutputStream(file);
+
+            while (!fileSent) {
+                DatagramPacket packet = new DatagramPacket(buffer, 4096);
+                multicastSocket.receive(packet);
+                int bytesReceived = packet.getLength();
+                byte[] data = packet.getData();
+
+                if (new String(data, 0, bytesReceived).trim().equals("#SENT#")) {
+                    fileSent = true;
+                } else {
+                    out.write(packet.getData(), 0, bytesReceived);
+                }
+            }
+
+            //System.out.println("Done.");
+            out.flush();
             out.close();
         }
     }
