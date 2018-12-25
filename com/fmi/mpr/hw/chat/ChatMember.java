@@ -82,7 +82,15 @@ public class ChatMember {
                     bytesRead, groupAddress, port);
 
             multicastSocket.send(packet);
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+
+        System.out.println("DONE!");
+        in.close();
 
         message = "#SENT#";
         messageInBytes = message.getBytes();

@@ -36,7 +36,10 @@ public class ThreadForReceiving implements Runnable{
                     String fileName = arr[1], memberName = arr[2];
 
                     if(!memberName.equals(ChatMember.memberName)) {
-                        receiveFile(fileName, multicastSocket);
+                        receiveFile(fileName, multicastSocket, true);
+                    }
+                    else{
+                        receiveFile(fileName, multicastSocket, false);
                     }
                 }
                 else if (!message.startsWith(ChatMember.memberName)) {
@@ -44,18 +47,19 @@ public class ThreadForReceiving implements Runnable{
                 }
 
             } catch (IOException e) {
-                System.out.println("Socket closed!");
+                //System.out.println("Socket closed!");
             }
         }
     }
 
-    private void receiveFile(String fileName, MulticastSocket multicastSocket) throws IOException {
+    private void receiveFile(String fileName, MulticastSocket multicastSocket, boolean createFile) throws IOException {
         //String[] arr = fileName.split("\\.");
+        fileName = fileName.split("\\.")[0];
         //String name = arr[0], format = arr[1];
 
         //System.out.println("file name = " + name + ", format = " + format);
 
-        File file = new File(fileName + "_copy");
+        File file = new File(fileName + "_copy_" + ChatMember.memberName + ".jpg");
         //File file = new File(name + "_copy_" + ChatMember.memberName + "." + format);
         FileOutputStream out = new FileOutputStream(file);
         byte[] buffer = new byte[4096];
@@ -67,12 +71,19 @@ public class ThreadForReceiving implements Runnable{
             int bytesReceived = packet.getLength();
             byte[] data = packet.getData();
 
-            if(new String(data).trim().equals("#SENT#")){
+            if(new String(data, 0, bytesReceived).trim().equals("#SENT#")){
                 fileSent = true;
             }
-            else {
+            else if(createFile){
                 out.write(packet.getData(), 0, bytesReceived);
             }
+        }
+
+        System.out.println("Done.");
+        out.flush();
+
+        if(out != null){
+            out.close();
         }
     }
 }
